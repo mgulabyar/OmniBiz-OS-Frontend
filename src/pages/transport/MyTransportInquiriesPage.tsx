@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   CalendarDays,
@@ -101,7 +101,7 @@ export const MyTransportInquiriesPage: React.FC = () => {
       const response = await transportService.getAllInquiries();
 
       if (response.status === "success") {
-        setInquiries(response.data.inquiries);
+        setInquiries(response.data.inquiries ?? []);
       }
     } catch (requestError) {
       showToast(
@@ -119,6 +119,12 @@ export const MyTransportInquiriesPage: React.FC = () => {
   useEffect(() => {
     void loadInquiries();
   }, []);
+
+  const inquiryCountLabel = useMemo(() => {
+    return `${inquiries.length} transport ${
+      inquiries.length === 1 ? "inquiry" : "inquiries"
+    }`;
+  }, [inquiries.length]);
 
   const openCancelDialog = (inquiry: TransportInquiryItem) => {
     setCancelTarget(inquiry);
@@ -175,7 +181,15 @@ export const MyTransportInquiriesPage: React.FC = () => {
       return;
     }
 
-    const message = `Salam! I need assistance with my transport inquiry.\nReference: ${inquiry._id}\nVehicle: ${inquiry.vehicle?.name?.en || "Transport vehicle"}\nRoute: ${inquiry.pickupLocation} to ${inquiry.dropoffLocation}\nDates: ${inquiry.startDate} to ${inquiry.endDate}`;
+    const message = `Salam! I need assistance with my transport inquiry.\nReference: ${
+      inquiry._id
+    }\nVehicle: ${
+      inquiry.vehicle?.name?.en || "Transport vehicle"
+    }\nRoute: ${inquiry.pickupLocation || "Not specified"} to ${
+      inquiry.dropoffLocation || "Not specified"
+    }\nDates: ${inquiry.startDate || "Not specified"} to ${
+      inquiry.endDate || "Not specified"
+    }`;
 
     window.open(
       `https://wa.me/?text=${encodeURIComponent(message)}`,
@@ -260,8 +274,7 @@ export const MyTransportInquiriesPage: React.FC = () => {
           </p>
 
           <p className="mt-1 text-sm text-slate-500">
-            {inquiries.length} transport inquiry
-            {inquiries.length !== 1 ? "ies" : ""} found
+            {inquiryCountLabel} found.
           </p>
         </div>
 
@@ -269,18 +282,18 @@ export const MyTransportInquiriesPage: React.FC = () => {
           type="button"
           onClick={() => void loadInquiries(true)}
           disabled={refreshing}
-          className="inline-flex items-center rounded-md justify-center bg-[#173C82] p-2 text-white transition hover:text-[#F45A2A] disabled:opacity-60"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-[#173C82] text-white transition hover:text-[#F45A2A] disabled:opacity-60"
           title="Refresh transport inquiries"
           aria-label="Refresh transport inquiries"
         >
           <RefreshCw
-            className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`}
+            className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
           />
         </button>
       </div>
 
       {inquiries.length === 0 ? (
-        <section className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+        <section className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#F4F7FC]">
             <Route className="h-6 w-6 text-[#173C82]" />
           </div>
@@ -303,7 +316,16 @@ export const MyTransportInquiriesPage: React.FC = () => {
             const canCancel =
               inquiry.status === "Pending" || inquiry.status === "Reviewed";
 
-            const quotedAmount = getSafeNumber(inquiry.quotedAmount, 0);
+            const quotedAmount =
+              inquiry.quotedAmount !== null &&
+              inquiry.quotedAmount !== undefined
+                ? getSafeNumber(inquiry.quotedAmount, 0)
+                : null;
+
+            const passengerCount = Math.max(
+              1,
+              getSafeNumber(inquiry.passengers, 1),
+            );
 
             return (
               <article
@@ -325,7 +347,7 @@ export const MyTransportInquiriesPage: React.FC = () => {
                         {inquiry.vehicle?.name?.ar && (
                           <p
                             dir="rtl"
-                            className="mt-1 text-right text-xs font-semibold text-slate-500"
+                            className="mt-1 text-right text-xs font-semibold text-[#173C82]/70"
                           >
                             {inquiry.vehicle.name.ar}
                           </p>
@@ -345,7 +367,7 @@ export const MyTransportInquiriesPage: React.FC = () => {
                         </div>
 
                         <p className="mt-2 text-sm font-bold leading-6 text-slate-700">
-                          {inquiry.pickupLocation}
+                          {inquiry.pickupLocation || "Not specified"}
                         </p>
                       </div>
 
@@ -356,7 +378,7 @@ export const MyTransportInquiriesPage: React.FC = () => {
                         </div>
 
                         <p className="mt-2 text-sm font-bold leading-6 text-slate-700">
-                          {inquiry.dropoffLocation}
+                          {inquiry.dropoffLocation || "Not specified"}
                         </p>
                       </div>
                     </div>
@@ -369,11 +391,11 @@ export const MyTransportInquiriesPage: React.FC = () => {
                         </div>
 
                         <p className="mt-2 text-xs font-bold text-slate-700">
-                          {inquiry.startDate}
+                          {inquiry.startDate || "Not specified"}
                         </p>
 
                         <p className="mt-0.5 text-xs font-medium text-slate-500">
-                          to {inquiry.endDate}
+                          to {inquiry.endDate || "Not specified"}
                         </p>
                       </div>
 
@@ -384,7 +406,7 @@ export const MyTransportInquiriesPage: React.FC = () => {
                         </div>
 
                         <p className="mt-2 text-sm font-bold text-slate-700">
-                          {inquiry.passengers}
+                          {passengerCount}
                         </p>
                       </div>
 
@@ -443,15 +465,14 @@ export const MyTransportInquiriesPage: React.FC = () => {
                           Quotation
                         </p>
 
-                        {inquiry.quotedAmount !== null &&
-                        inquiry.quotedAmount !== undefined ? (
+                        {quotedAmount !== null ? (
                           <p className="mt-1 flex items-center gap-1.5 text-xl font-bold text-[#173C82]">
                             <CircleDollarSign className="h-5 w-5 text-[#F45A2A]" />
                             SAR {quotedAmount.toFixed(2)}
                           </p>
                         ) : (
                           <p className="mt-1 text-sm font-bold text-amber-700">
-                            Awaiting quote
+                            Awaiting Quote
                           </p>
                         )}
                       </div>
@@ -533,21 +554,31 @@ export const MyTransportInquiriesPage: React.FC = () => {
 
             <div className="mt-5 rounded-lg bg-[#F4F7FC] p-4">
               <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                Selected transport request
+                Selected Transport Request
               </p>
 
               <p className="mt-1 text-sm font-bold text-[#173C82]">
                 {cancelTarget.vehicle?.name?.en || "Transport Vehicle"}
               </p>
 
-              <p className="mt-1 text-xs font-medium text-slate-500">
-                {cancelTarget.pickupLocation} to {cancelTarget.dropoffLocation}
+              {cancelTarget.vehicle?.name?.ar && (
+                <p
+                  dir="rtl"
+                  className="mt-1 text-right text-xs font-semibold text-[#173C82]/70"
+                >
+                  {cancelTarget.vehicle.name.ar}
+                </p>
+              )}
+
+              <p className="mt-2 text-xs font-medium text-slate-500">
+                {cancelTarget.pickupLocation || "Not specified"} to{" "}
+                {cancelTarget.dropoffLocation || "Not specified"}
               </p>
             </div>
 
             <div className="mt-5">
               <label className="mb-2 block text-xs font-bold text-slate-700">
-                Cancellation reason{" "}
+                Cancellation Reason{" "}
                 <span className="font-medium text-slate-400">(optional)</span>
               </label>
 

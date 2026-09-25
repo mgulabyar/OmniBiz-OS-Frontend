@@ -53,6 +53,21 @@ const getSafeNumber = (value: unknown, fallback = 0) => {
   return Number.isFinite(parsedValue) ? parsedValue : fallback;
 };
 
+const isValidHttpUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const getVehicleName = (vehicle: VehicleItem) =>
+  vehicle.name?.en || "Unnamed Vehicle";
+
+const getVehicleNameArabic = (vehicle: VehicleItem) => vehicle.name?.ar || "";
+
 export const TransportManagementPage: React.FC = () => {
   const [vehicles, setVehicles] = useState<VehicleItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +96,7 @@ export const TransportManagementPage: React.FC = () => {
 
     try {
       const response = await transportService.getVehicles();
-      setVehicles(response.data.vehicles);
+      setVehicles(response.data.vehicles ?? []);
     } catch (requestError) {
       showToast(
         "error",
@@ -116,8 +131,8 @@ export const TransportManagementPage: React.FC = () => {
     setEditingId(vehicle._id);
 
     setForm({
-      nameEn: vehicle.name.en || "",
-      nameAr: vehicle.name.ar || "",
+      nameEn: vehicle.name?.en || "",
+      nameAr: vehicle.name?.ar || "",
       vehicleType: vehicle.vehicleType,
       capacity: String(getSafeNumber(vehicle.capacity, 1)),
       pricePerDay: String(getSafeNumber(vehicle.pricePerDay, 0)),
@@ -135,6 +150,10 @@ export const TransportManagementPage: React.FC = () => {
 
   const handleFormSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+
+    if (submitting) {
+      return;
+    }
 
     const capacity = getSafeNumber(form.capacity, 0);
     const pricePerDay = getSafeNumber(form.pricePerDay, -1);
@@ -156,6 +175,19 @@ export const TransportManagementPage: React.FC = () => {
       return;
     }
 
+    const images = form.imagesText
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    if (images.some((image) => !isValidHttpUrl(image))) {
+      showToast(
+        "error",
+        "Each vehicle image must use a valid http or https URL.",
+      );
+      return;
+    }
+
     const payload = {
       name: {
         en: form.nameEn.trim(),
@@ -168,10 +200,7 @@ export const TransportManagementPage: React.FC = () => {
         en: form.descriptionEn.trim(),
         ar: form.descriptionAr.trim(),
       },
-      images: form.imagesText
-        .split("\n")
-        .map((item) => item.trim())
-        .filter(Boolean),
+      images,
       features: form.featuresText
         .split(",")
         .map((item) => item.trim())
@@ -216,7 +245,7 @@ export const TransportManagementPage: React.FC = () => {
   };
 
   const handleDeleteVehicle = async () => {
-    if (!deleteTarget) {
+    if (!deleteTarget || deletingId) {
       return;
     }
 
@@ -367,7 +396,7 @@ export const TransportManagementPage: React.FC = () => {
           <form onSubmit={handleFormSubmit} className="mt-5 space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Vehicle Name — English
+                Vehicle Name - English
               </label>
 
               <input
@@ -380,14 +409,14 @@ export const TransportManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="e.g. Toyota Hiace 2025"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Vehicle Name — Arabic
+                Vehicle Name - Arabic
               </label>
 
               <input
@@ -401,32 +430,51 @@ export const TransportManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="اسم المركبة بالعربية"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
 
-            <div>
+            <div className="relative">
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
                 Vehicle Type
               </label>
 
-              <select
-                value={form.vehicleType}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    vehicleType: event.target.value as VehicleType,
-                  }))
-                }
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
-              >
-                {vehicleTypes.map((vehicleType) => (
-                  <option key={vehicleType} value={vehicleType}>
-                    {vehicleType}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={form.vehicleType}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      vehicleType: event.target.value as VehicleType,
+                    }))
+                  }
+                  className="w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-10 py-2 text-sm font-medium text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
+                >
+                  {vehicleTypes.map((vehicleType) => (
+                    <option key={vehicleType} value={vehicleType}>
+                      {vehicleType}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-500">
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://w3.org"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -445,7 +493,7 @@ export const TransportManagementPage: React.FC = () => {
                       capacity: event.target.value,
                     }))
                   }
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
@@ -466,7 +514,7 @@ export const TransportManagementPage: React.FC = () => {
                       pricePerDay: event.target.value,
                     }))
                   }
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
@@ -487,13 +535,13 @@ export const TransportManagementPage: React.FC = () => {
                     luggageCapacity: event.target.value,
                   }))
                 }
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Description — English
+                Description - English
               </label>
 
               <textarea
@@ -506,13 +554,13 @@ export const TransportManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="Short vehicle description"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Description — Arabic
+                Description - Arabic
               </label>
 
               <textarea
@@ -526,7 +574,7 @@ export const TransportManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="وصف مختصر للمركبة"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -548,7 +596,7 @@ export const TransportManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="https://example.com/vehicle-image.jpg"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -570,7 +618,7 @@ export const TransportManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="Wi-Fi, Leather seats, Water bottles"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -610,7 +658,7 @@ export const TransportManagementPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[#173C82] px-4 text-sm font-bold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-[#173C82] px-4 text-sm font-semibold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -675,6 +723,8 @@ export const TransportManagementPage: React.FC = () => {
               {vehicles.map((vehicle) => {
                 const capacity = getSafeNumber(vehicle.capacity, 0);
                 const pricePerDay = getSafeNumber(vehicle.pricePerDay, 0);
+                const vehicleName = getVehicleName(vehicle);
+                const vehicleNameArabic = getVehicleNameArabic(vehicle);
 
                 return (
                   <article
@@ -684,7 +734,7 @@ export const TransportManagementPage: React.FC = () => {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="truncate text-sm font-bold text-[#173C82]">
-                          {vehicle.name.en}
+                          {vehicleName}
                         </h3>
 
                         <span className="rounded-md bg-[#F4F7FC] px-2 py-1 text-[10px] font-bold text-[#173C82]">
@@ -702,12 +752,12 @@ export const TransportManagementPage: React.FC = () => {
                         </span>
                       </div>
 
-                      {vehicle.name.ar && (
+                      {vehicleNameArabic && (
                         <p
                           dir="rtl"
                           className="mt-1 text-right text-xs font-semibold text-[#173C82]/70"
                         >
-                          {vehicle.name.ar}
+                          {vehicleNameArabic}
                         </p>
                       )}
 
@@ -728,7 +778,7 @@ export const TransportManagementPage: React.FC = () => {
                         disabled={submitting || Boolean(deletingId)}
                         className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#173C82]/15 bg-white text-[#173C82] transition hover:bg-[#F4F7FC] disabled:cursor-not-allowed disabled:opacity-60"
                         title="Edit vehicle"
-                        aria-label={`Edit ${vehicle.name.en}`}
+                        aria-label={`Edit ${vehicleName}`}
                       >
                         <Edit3 className="h-4 w-4" />
                       </button>
@@ -739,7 +789,7 @@ export const TransportManagementPage: React.FC = () => {
                         disabled={submitting || Boolean(deletingId)}
                         className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-100 bg-white text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                         title="Remove vehicle"
-                        aria-label={`Remove ${vehicle.name.en}`}
+                        aria-label={`Remove ${vehicleName}`}
                       >
                         {deletingId === vehicle._id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -807,15 +857,15 @@ export const TransportManagementPage: React.FC = () => {
               </p>
 
               <p className="mt-1 text-sm font-bold text-[#173C82]">
-                {deleteTarget.name.en}
+                {getVehicleName(deleteTarget)}
               </p>
 
-              {deleteTarget.name.ar && (
+              {getVehicleNameArabic(deleteTarget) && (
                 <p
                   dir="rtl"
                   className="mt-1 text-right text-xs font-semibold text-[#173C82]/70"
                 >
-                  {deleteTarget.name.ar}
+                  {getVehicleNameArabic(deleteTarget)}
                 </p>
               )}
 
@@ -833,8 +883,8 @@ export const TransportManagementPage: React.FC = () => {
               </p>
 
               <p className="mt-1 text-xs leading-5 text-red-600">
-                Existing transport inquiries will not be deleted, but customers
-                will no longer be able to submit new requests for this vehicle.
+                Customers will no longer be able to submit new requests for this
+                vehicle. Confirm only if you intend to remove it.
               </p>
             </div>
 

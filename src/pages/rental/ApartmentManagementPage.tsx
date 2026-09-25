@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -17,12 +17,14 @@ import {
   type PropertyType,
 } from "../../services/rental/rentalService";
 
-const propertyTypes: PropertyType[] = [
-  "Apartment",
-  "Studio",
-  "Villa",
-  "Room",
-];
+const propertyTypes: PropertyType[] = ["Apartment", "Studio", "Villa", "Room"];
+
+type ToastType = "success" | "error";
+
+interface ToastState {
+  type: ToastType;
+  message: string;
+}
 
 const createInitialForm = () => ({
   titleEn: "",
@@ -44,31 +46,61 @@ const createInitialForm = () => ({
   isAvailable: true,
 });
 
+const getSafeNumber = (value: unknown, fallback = 0) => {
+  const numericValue = Number(value);
+
+  return Number.isFinite(numericValue) ? numericValue : fallback;
+};
+
+const isValidHttpUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
 export const ApartmentManagementPage: React.FC = () => {
   const [apartments, setApartments] = useState<ApartmentItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ApartmentItem | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
   const [form, setForm] = useState(createInitialForm);
 
-  const loadApartments = async () => {
-    setLoading(true);
-    setError(null);
+  const showToast = (type: ToastType, message: string) => {
+    setToast({ type, message });
+
+    window.setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  };
+
+  const loadApartments = async (showRefresh = false) => {
+    if (showRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
 
     try {
       const response = await rentalService.getApartments();
-      setApartments(response.data.apartments);
+      setApartments(response.data.apartments ?? []);
     } catch (requestError) {
-      setError(
+      showToast(
+        "error",
         requestError instanceof Error
           ? requestError.message
           : "Unable to load apartment directory.",
       );
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -76,34 +108,46 @@ export const ApartmentManagementPage: React.FC = () => {
     void loadApartments();
   }, []);
 
+  const listingCountLabel = useMemo(() => {
+    return `${apartments.length} listing${apartments.length !== 1 ? "s" : ""}`;
+  }, [apartments.length]);
+
   const resetForm = () => {
+    if (submitting) {
+      return;
+    }
+
     setEditingId(null);
     setForm(createInitialForm());
   };
 
   const handleEditClick = (apartment: ApartmentItem) => {
-    setError(null);
-    setSuccess(null);
     setEditingId(apartment._id);
 
     setForm({
-      titleEn: apartment.title.en,
-      titleAr: apartment.title.ar,
+      titleEn: apartment.title?.en || "",
+      titleAr: apartment.title?.ar || "",
       propertyType: apartment.propertyType,
-      roomsCount: String(apartment.roomsCount),
-      maxGuests: String(apartment.maxGuests),
-      bedsCount: String(apartment.bedsCount),
-      bathroomsCount: String(apartment.bathroomsCount),
-      pricePerNight: String(apartment.pricePerNight),
-      cleaningFee: String(apartment.cleaningFee || 0),
-      googleMapUrl: apartment.googleMapUrl,
+      roomsCount: String(getSafeNumber(apartment.roomsCount, 1)),
+      maxGuests: String(getSafeNumber(apartment.maxGuests, 1)),
+      bedsCount: String(getSafeNumber(apartment.bedsCount, 1)),
+      bathroomsCount: String(getSafeNumber(apartment.bathroomsCount, 1)),
+      pricePerNight: String(getSafeNumber(apartment.pricePerNight, 0)),
+      cleaningFee: String(getSafeNumber(apartment.cleaningFee, 0)),
+      googleMapUrl: apartment.googleMapUrl || "",
       locationName: apartment.locationName || "",
       descriptionEn: apartment.description?.en || "",
       descriptionAr: apartment.description?.ar || "",
       imagesText: apartment.images?.join("\n") || "",
-      amenitiesEnText: apartment.amenities.map((item) => item.en).join("\n"),
-      amenitiesArText: apartment.amenities.map((item) => item.ar).join("\n"),
-      isAvailable: apartment.isAvailable,
+      amenitiesEnText: (apartment.amenities ?? [])
+        .map((item) => item.en)
+        .filter(Boolean)
+        .join("\n"),
+      amenitiesArText: (apartment.amenities ?? [])
+        .map((item) => item.ar)
+        .filter(Boolean)
+        .join("\n"),
+      isAvailable: Boolean(apartment.isAvailable),
     });
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -111,15 +155,22 @@ export const ApartmentManagementPage: React.FC = () => {
 
   const handleFormSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setError(null);
-    setSuccess(null);
 
-    const roomsCount = Number(form.roomsCount);
-    const maxGuests = Number(form.maxGuests);
-    const bedsCount = Number(form.bedsCount);
-    const bathroomsCount = Number(form.bathroomsCount);
-    const pricePerNight = Number(form.pricePerNight);
-    const cleaningFee = Number(form.cleaningFee);
+    if (!form.titleEn.trim() || !form.titleAr.trim()) {
+      showToast(
+        "error",
+        "Please enter the property title in English and Arabic.",
+      );
+      return;
+    }
+
+    const roomsCount = getSafeNumber(form.roomsCount, 0);
+    const maxGuests = getSafeNumber(form.maxGuests, 0);
+    const bedsCount = getSafeNumber(form.bedsCount, 0);
+    const bathroomsCount = getSafeNumber(form.bathroomsCount, 0);
+    const pricePerNight = getSafeNumber(form.pricePerNight, -1);
+    const cleaningFee = getSafeNumber(form.cleaningFee, -1);
+    const mapsUrl = form.googleMapUrl.trim();
 
     if (
       roomsCount < 1 ||
@@ -129,7 +180,15 @@ export const ApartmentManagementPage: React.FC = () => {
       pricePerNight < 0 ||
       cleaningFee < 0
     ) {
-      setError("Please enter valid property capacity, rooms and pricing.");
+      showToast(
+        "error",
+        "Please enter valid property capacity, rooms and pricing.",
+      );
+      return;
+    }
+
+    if (!mapsUrl || !isValidHttpUrl(mapsUrl)) {
+      showToast("error", "Please enter a valid Google Maps URL.");
       return;
     }
 
@@ -153,6 +212,23 @@ export const ApartmentManagementPage: React.FC = () => {
       ar: arabicAmenities[index] || "",
     })).filter((item) => item.en && item.ar);
 
+    const images = form.imagesText
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    const invalidImageUrl = images.some(
+      (imageUrl) => !isValidHttpUrl(imageUrl),
+    );
+
+    if (invalidImageUrl) {
+      showToast(
+        "error",
+        "Each property image must use a valid http or https URL.",
+      );
+      return;
+    }
+
     const payload = {
       title: {
         en: form.titleEn.trim(),
@@ -170,12 +246,9 @@ export const ApartmentManagementPage: React.FC = () => {
       },
       pricePerNight,
       cleaningFee,
-      googleMapUrl: form.googleMapUrl.trim(),
+      googleMapUrl: mapsUrl,
       locationName: form.locationName.trim() || null,
-      images: form.imagesText
-        .split("\n")
-        .map((item) => item.trim())
-        .filter(Boolean),
+      images,
       isAvailable: form.isAvailable,
     };
 
@@ -184,16 +257,18 @@ export const ApartmentManagementPage: React.FC = () => {
     try {
       if (editingId) {
         await rentalService.updateApartment(editingId, payload);
-        setSuccess("Apartment listing updated successfully.");
+        showToast("success", "Apartment listing updated successfully.");
       } else {
         await rentalService.addApartment(payload);
-        setSuccess("New apartment listing created successfully.");
+        showToast("success", "New apartment listing created successfully.");
       }
 
-      resetForm();
-      await loadApartments();
+      setEditingId(null);
+      setForm(createInitialForm());
+      await loadApartments(true);
     } catch (requestError) {
-      setError(
+      showToast(
+        "error",
         requestError instanceof Error
           ? requestError.message
           : "Unable to save apartment details.",
@@ -203,30 +278,35 @@ export const ApartmentManagementPage: React.FC = () => {
     }
   };
 
-  const handleDeleteClick = async (apartment: ApartmentItem) => {
-    const confirmed = window.confirm(
-      `Remove "${apartment.title.en}" from public rental listing?`,
-    );
-
-    if (!confirmed) {
+  const closeDeleteDialog = () => {
+    if (deletingId) {
       return;
     }
 
-    setDeletingId(apartment._id);
-    setError(null);
-    setSuccess(null);
+    setDeleteTarget(null);
+  };
+
+  const handleDeleteApartment = async () => {
+    if (!deleteTarget) {
+      return;
+    }
+
+    setDeletingId(deleteTarget._id);
 
     try {
-      await rentalService.deleteApartment(apartment._id);
-      setSuccess("Apartment removed from public rental listing.");
+      await rentalService.deleteApartment(deleteTarget._id);
 
-      if (editingId === apartment._id) {
-        resetForm();
+      if (editingId === deleteTarget._id) {
+        setEditingId(null);
+        setForm(createInitialForm());
       }
 
-      await loadApartments();
+      showToast("success", "Apartment removed from the public rental listing.");
+      setDeleteTarget(null);
+      await loadApartments(true);
     } catch (requestError) {
-      setError(
+      showToast(
+        "error",
         requestError instanceof Error
           ? requestError.message
           : "Unable to remove apartment listing.",
@@ -237,71 +317,117 @@ export const ApartmentManagementPage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-      <div className="mb-7 flex flex-col gap-4 border-b border-slate-200 pb-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-[#F45A2A]">
-            <Home className="h-4 w-4" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.16em]">
-              Rental Administration
+    <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      {toast && (
+        <div
+          className={`fixed right-4 top-24 z-100 flex w-[calc(100%-2rem)] max-w-sm items-start gap-3 rounded-xl border p-4 shadow-xl sm:right-6 ${
+            toast.type === "success"
+              ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+              : "border-red-100 bg-red-50 text-red-700"
+          }`}
+          role="alert"
+        >
+          {toast.type === "success" ? (
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+          ) : (
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+          )}
+
+          <p className="flex-1 text-sm font-semibold leading-5">
+            {toast.message}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            className="text-current opacity-60 transition hover:opacity-100"
+            aria-label="Close notification"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      <section className="relative overflow-hidden rounded-xl border border-[#DCE7FA] bg-linear-to-br from-[#F4F7FC] via-white to-[#FFF8F5] px-5 py-8 sm:px-8 sm:py-10">
+        <div className="relative z-10 max-w-2xl">
+          <div className="flex items-center gap-2 text-[#173C82]">
+            <Home className="h-4 w-4 text-[#F45A2A]" />
+
+            <span className="text-[11px] font-bold uppercase tracking-wide">
+              OmniBiz <span className="text-[#F45A2A]">Rentals</span>
             </span>
           </div>
 
-          <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-            <span className="text-[#173C82]">Property </span>
-            <span className="text-[#F45A2A]">Management</span>
-          </h2>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#173C82] sm:text-3xl">
+            Property <span className="text-[#F45A2A]">Management</span>
+          </h1>
+
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-[14px]">
+            Create and maintain short-term rental listings, define guest
+            capacity, update property details and manage public availability.
+          </p>
+        </div>
+
+        <div className="absolute -right-8 -top-10 hidden h-48 w-48 rounded-full border-28 border-[#173C82]/5 sm:block" />
+        <div className="absolute -bottom-12 right-20 hidden h-32 w-32 rounded-full border-22 border-[#F45A2A]/10 sm:block" />
+      </section>
+
+      <div className="mt-7 flex items-center justify-between border-b border-slate-200 pb-5">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-wide text-[#173C82]">
+            Property Directory
+          </p>
 
           <p className="mt-1 text-sm text-slate-500">
-            Create and manage short-term rental listings and availability.
+            {listingCountLabel} currently configured for rental guests.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={() => void loadApartments()}
-          disabled={loading}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#173C82]/15 bg-white px-4 py-2.5 text-xs font-bold text-[#173C82] transition hover:border-[#173C82]/35 hover:bg-[#F4F7FC] disabled:opacity-60"
+          onClick={() => void loadApartments(true)}
+          disabled={refreshing}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-[#173C82] text-white transition hover:text-[#F45A2A] disabled:opacity-60"
+          title="Refresh rental listings"
+          aria-label="Refresh rental listings"
         >
           <RefreshCw
-            className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+            className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
           />
-          Refresh listings
         </button>
       </div>
 
-      {success && (
-        <div className="mb-5 flex items-start gap-2 rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-sm font-medium text-emerald-700">
-          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{success}</span>
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-5 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-medium text-red-700">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      <div className="grid gap-6 xl:grid-cols-[410px_minmax(0,1fr)]">
-        <section className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_5px_16px_rgba(15,23,42,0.04)] sm:p-6">
+      <div className="mt-8 grid gap-6 xl:grid-cols-[410px_minmax(0,1fr)]">
+        <section className="h-fit rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
           <div className="flex items-start justify-between border-b border-slate-100 pb-4">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#F45A2A]">
-                {editingId ? "Edit Listing" : "New Listing"}
-              </p>
+              <div className="flex items-center gap-2 text-[#173C82]">
+                <Home className="h-4 w-4 text-[#F45A2A]" />
 
-              <h3 className="mt-1 text-lg font-bold text-[#173C82]">
-                {editingId ? "Update property" : "Add property"}
-              </h3>
+                <span className="text-[11px] font-bold uppercase tracking-wide">
+                  {editingId ? "Update Listing" : "New Listing"}
+                </span>
+              </div>
+
+              <h2 className="mt-2 text-lg font-bold text-[#173C82]">
+                {editingId ? (
+                  <>
+                    Edit <span className="text-[#F45A2A]">Property</span>
+                  </>
+                ) : (
+                  <>
+                    Add <span className="text-[#F45A2A]">Property</span>
+                  </>
+                )}
+              </h2>
             </div>
 
             {editingId && (
               <button
                 type="button"
                 onClick={resetForm}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                disabled={submitting}
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-[#173C82] transition hover:bg-[#FFF4F0] hover:text-[#F45A2A] disabled:opacity-50"
                 aria-label="Cancel apartment edit"
               >
                 <X className="h-4 w-4" />
@@ -312,7 +438,7 @@ export const ApartmentManagementPage: React.FC = () => {
           <form onSubmit={handleFormSubmit} className="mt-5 space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Property title — English
+                Property Title - English
               </label>
 
               <input
@@ -325,14 +451,14 @@ export const ApartmentManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="e.g. Downtown Executive Apartment"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Property title — Arabic
+                Property Title - Arabic
               </label>
 
               <input
@@ -346,32 +472,51 @@ export const ApartmentManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="اسم العقار بالعربية"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Property type
+                Property Type
               </label>
 
-              <select
-                value={form.propertyType}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    propertyType: event.target.value as PropertyType,
-                  }))
-                }
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
-              >
-                {propertyTypes.map((propertyType) => (
-                  <option key={propertyType} value={propertyType}>
-                    {propertyType}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={form.propertyType}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      propertyType: event.target.value as PropertyType,
+                    }))
+                  }
+                  className="w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-sm font-medium text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
+                >
+                  {propertyTypes.map((propertyType) => (
+                    <option key={propertyType} value={propertyType}>
+                      {propertyType}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-500">
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://w3.org"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -390,14 +535,14 @@ export const ApartmentManagementPage: React.FC = () => {
                       roomsCount: event.target.value,
                     }))
                   }
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
 
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                  Max guests
+                  Max Guests
                 </label>
 
                 <input
@@ -410,7 +555,7 @@ export const ApartmentManagementPage: React.FC = () => {
                       maxGuests: event.target.value,
                     }))
                   }
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
@@ -432,7 +577,7 @@ export const ApartmentManagementPage: React.FC = () => {
                       bedsCount: event.target.value,
                     }))
                   }
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
@@ -452,7 +597,7 @@ export const ApartmentManagementPage: React.FC = () => {
                       bathroomsCount: event.target.value,
                     }))
                   }
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
@@ -461,7 +606,7 @@ export const ApartmentManagementPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                  Nightly rate
+                  Nightly Rate
                 </label>
 
                 <input
@@ -475,14 +620,15 @@ export const ApartmentManagementPage: React.FC = () => {
                       pricePerNight: event.target.value,
                     }))
                   }
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  placeholder="0.00"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
 
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                  Cleaning fee
+                  Cleaning Fee
                 </label>
 
                 <input
@@ -496,14 +642,15 @@ export const ApartmentManagementPage: React.FC = () => {
                       cleaningFee: event.target.value,
                     }))
                   }
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 />
               </div>
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Location name
+                Location Name{" "}
+                <span className="font-medium text-slate-400">(optional)</span>
               </label>
 
               <input
@@ -516,7 +663,7 @@ export const ApartmentManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="e.g. Al Olaya, Riyadh"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -535,14 +682,14 @@ export const ApartmentManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="https://maps.google.com/..."
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Description — English
+                Description - English
               </label>
 
               <textarea
@@ -555,13 +702,13 @@ export const ApartmentManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="Short property description"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Description — Arabic
+                Description - Arabic
               </label>
 
               <textarea
@@ -575,13 +722,16 @@ export const ApartmentManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="وصف مختصر للعقار"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Image URLs (one per line)
+                Image URLs{" "}
+                <span className="font-medium text-slate-400">
+                  (one per line)
+                </span>
               </label>
 
               <textarea
@@ -594,13 +744,16 @@ export const ApartmentManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="https://example.com/property-image.jpg"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Amenities — English (one per line)
+                Amenities - English{" "}
+                <span className="font-medium text-slate-400">
+                  (one per line)
+                </span>
               </label>
 
               <textarea
@@ -612,14 +765,19 @@ export const ApartmentManagementPage: React.FC = () => {
                     amenitiesEnText: event.target.value,
                   }))
                 }
-                placeholder="High-speed Wi-Fi&#10;Smart TV&#10;Fully equipped kitchen"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                placeholder={
+                  "High-speed Wi-Fi\nSmart TV\nFully equipped kitchen"
+                }
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Amenities — Arabic (one per line)
+                Amenities - Arabic{" "}
+                <span className="font-medium text-slate-400">
+                  (one per line)
+                </span>
               </label>
 
               <textarea
@@ -632,13 +790,15 @@ export const ApartmentManagementPage: React.FC = () => {
                     amenitiesArText: event.target.value,
                   }))
                 }
-                placeholder="واي فاي عالي السرعة&#10;تلفزيون ذكي&#10;مطبخ مجهز بالكامل"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                placeholder={
+                  "واي فاي عالي السرعة\nتلفزيون ذكي\nمطبخ مجهز بالكامل"
+                }
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
-            <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs font-bold text-slate-700">
-              Available for new booking requests
+            <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 text-xs font-bold text-slate-700">
+              Available for New Booking Requests
               <input
                 type="checkbox"
                 checked={form.isAvailable}
@@ -656,24 +816,25 @@ export const ApartmentManagementPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#173C82] py-3 text-sm font-bold text-white shadow-[0_6px_14px_rgba(23,60,130,0.18)] transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-[#173C82] px-4 text-sm font-semibold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-[#F45A2A]" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : editingId ? (
                   <PencilLine className="h-4 w-4 text-[#F45A2A]" />
                 ) : (
                   <Plus className="h-4 w-4 text-[#F45A2A]" />
                 )}
 
-                {editingId ? "Save changes" : "Create listing"}
+                {editingId ? "Save Changes" : "Create Listing"}
               </button>
 
               {editingId && (
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                  disabled={submitting}
+                  className="h-10 rounded-md border border-slate-200 px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -682,20 +843,24 @@ export const ApartmentManagementPage: React.FC = () => {
           </form>
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_5px_16px_rgba(15,23,42,0.04)]">
+        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#F45A2A]">
-                Property Directory
-              </p>
+              <div className="flex items-center gap-2 text-[#173C82]">
+                <Home className="h-4 w-4 text-[#F45A2A]" />
 
-              <h3 className="mt-1 text-lg font-bold text-[#173C82]">
-                Active listings
-              </h3>
+                <span className="text-[11px] font-bold uppercase tracking-wide">
+                  Property Directory
+                </span>
+              </div>
+
+              <h2 className="mt-2 text-lg font-bold text-[#173C82]">
+                Active <span className="text-[#F45A2A]">Listings</span>
+              </h2>
             </div>
 
-            <span className="rounded-full bg-[#F4F7FC] px-3 py-1 text-xs font-bold text-[#173C82]">
-              {apartments.length} listings
+            <span className="rounded-md bg-[#F4F7FC] px-2.5 py-1.5 text-xs font-bold text-[#173C82]">
+              {listingCountLabel}
             </span>
           </div>
 
@@ -705,76 +870,212 @@ export const ApartmentManagementPage: React.FC = () => {
             </div>
           ) : apartments.length === 0 ? (
             <div className="px-6 py-16 text-center">
-              <p className="text-sm font-medium text-slate-500">
-                No active rental listings found.
+              <Home className="mx-auto h-7 w-7 text-[#173C82]/25" />
+
+              <p className="mt-3 text-sm font-medium text-slate-500">
+                No rental listings have been created yet.
               </p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {apartments.map((apartment) => (
-                <article
-                  key={apartment._id}
-                  className="flex flex-col gap-4 px-5 py-5 transition hover:bg-[#F8FAFE] sm:flex-row sm:items-center sm:justify-between sm:px-6"
-                >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="truncate text-sm font-bold text-slate-800">
-                        {apartment.title.en}
-                      </h4>
+              {apartments.map((apartment) => {
+                const roomsCount = getSafeNumber(apartment.roomsCount, 0);
+                const maxGuests = getSafeNumber(apartment.maxGuests, 0);
+                const pricePerNight = getSafeNumber(apartment.pricePerNight, 0);
 
-                      <span className="rounded-md bg-[#F4F7FC] px-2 py-1 text-[10px] font-bold text-[#173C82]">
-                        {apartment.propertyType}
-                      </span>
-                    </div>
+                return (
+                  <article
+                    key={apartment._id}
+                    className="flex flex-col gap-4 px-5 py-5 transition hover:bg-[#F8FAFE] sm:flex-row sm:items-center sm:justify-between sm:px-6"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="truncate text-sm font-bold text-[#173C82]">
+                          {apartment.title.en}
+                        </h3>
 
-                    <p
-                      dir="rtl"
-                      className="mt-1 text-right text-xs font-semibold text-[#173C82]/70"
-                    >
-                      {apartment.title.ar}
-                    </p>
+                        <span className="rounded-md bg-[#F4F7FC] px-2 py-1 text-[10px] font-bold text-[#173C82]">
+                          {apartment.propertyType}
+                        </span>
 
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-slate-500">
-                      <span>{apartment.roomsCount} rooms</span>
-                      <span>Up to {apartment.maxGuests} guests</span>
-                      <span>
-                        SAR {apartment.pricePerNight.toFixed(2)} / night
-                      </span>
-                    </div>
-                  </div>
+                        <span
+                          className={`rounded-md px-2 py-1 text-[10px] font-bold ${
+                            apartment.isAvailable
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {apartment.isAvailable ? "Available" : "Unavailable"}
+                        </span>
+                      </div>
 
-                  <div className="flex shrink-0 items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleEditClick(apartment)}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#173C82]/15 bg-white text-[#173C82] transition hover:bg-[#F4F7FC]"
-                      title="Edit apartment"
-                      aria-label={`Edit ${apartment.title.en}`}
-                    >
-                      <Edit3 className="h-4 w-4" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => void handleDeleteClick(apartment)}
-                      disabled={deletingId === apartment._id}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-100 bg-white text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                      title="Remove listing"
-                      aria-label={`Remove ${apartment.title.en}`}
-                    >
-                      {deletingId === apartment._id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
+                      {apartment.title.ar && (
+                        <p
+                          dir="rtl"
+                          className="mt-1 text-right text-xs font-semibold text-[#173C82]/70"
+                        >
+                          {apartment.title.ar}
+                        </p>
                       )}
-                    </button>
-                  </div>
-                </article>
-              ))}
+
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-slate-500">
+                        <span>{roomsCount} rooms</span>
+                        <span>Up to {maxGuests} guests</span>
+                        <span>SAR {pricePerNight.toFixed(2)} / night</span>
+
+                        {apartment.locationName && (
+                          <span>{apartment.locationName}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleEditClick(apartment)}
+                        disabled={submitting || Boolean(deletingId)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#173C82]/15 bg-white text-[#173C82] transition hover:bg-[#F4F7FC] disabled:cursor-not-allowed disabled:opacity-60"
+                        title="Edit apartment"
+                        aria-label={`Edit ${apartment.title.en}`}
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget(apartment)}
+                        disabled={submitting || Boolean(deletingId)}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-100 bg-white text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        title="Remove listing"
+                        aria-label={`Remove ${apartment.title.en}`}
+                      >
+                        {deletingId === apartment._id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
       </div>
-    </div>
+
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-90 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeDeleteDialog();
+            }
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-[0_24px_70px_rgba(15,23,42,0.25)] sm:p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="remove-apartment-title"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-[#173C82]">
+                  <Home className="h-4 w-4 text-[#F45A2A]" />
+
+                  <span className="text-[11px] font-bold uppercase tracking-wide">
+                    OmniBiz <span className="text-[#F45A2A]">Rentals</span>
+                  </span>
+                </div>
+
+                <h2
+                  id="remove-apartment-title"
+                  className="mt-3 text-xl font-bold tracking-tight text-[#173C82]"
+                >
+                  Remove <span className="text-[#F45A2A]">Listing</span>
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeDeleteDialog}
+                disabled={Boolean(deletingId)}
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-[#173C82] transition hover:bg-[#FFF4F0] hover:text-[#F45A2A] disabled:opacity-50"
+                aria-label="Close apartment listing removal dialog"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-lg bg-[#F4F7FC] p-4">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                Selected Listing
+              </p>
+
+              <p className="mt-1 text-sm font-bold text-[#173C82]">
+                {deleteTarget.title.en}
+              </p>
+
+              {deleteTarget.title.ar && (
+                <p
+                  dir="rtl"
+                  className="mt-1 text-right text-xs font-semibold text-[#173C82]/70"
+                >
+                  {deleteTarget.title.ar}
+                </p>
+              )}
+
+              <p className="mt-2 text-xs font-medium text-slate-500">
+                {deleteTarget.propertyType} ·{" "}
+                {getSafeNumber(deleteTarget.roomsCount, 0)} rooms · Up to{" "}
+                {getSafeNumber(deleteTarget.maxGuests, 0)} guests · SAR{" "}
+                {getSafeNumber(deleteTarget.pricePerNight, 0).toFixed(2)} per
+                night
+              </p>
+            </div>
+
+            <div className="mt-5 rounded-lg border border-red-100 bg-red-50 p-3">
+              <p className="text-sm font-bold text-red-700">
+                This listing will be removed from the public rental directory.
+              </p>
+
+              <p className="mt-1 text-xs leading-5 text-red-600">
+                Guests will no longer be able to view or submit new booking
+                requests for this property. Confirm only if you intend to remove
+                it.
+              </p>
+            </div>
+
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={closeDeleteDialog}
+                disabled={Boolean(deletingId)}
+                className="h-10 rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                Keep Listing
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleDeleteApartment()}
+                disabled={Boolean(deletingId)}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-xs font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {deletingId ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+
+                {deletingId ? "Removing..." : "Remove Listing"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
   );
 };

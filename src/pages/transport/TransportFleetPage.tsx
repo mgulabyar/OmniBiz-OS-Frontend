@@ -100,7 +100,7 @@ export const TransportFleetPage: React.FC = () => {
         type: selectedType || undefined,
       });
 
-      setVehicles(response.data.vehicles);
+      setVehicles(response.data.vehicles ?? []);
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -118,7 +118,7 @@ export const TransportFleetPage: React.FC = () => {
   }, [selectedType]);
 
   const selectedVehicleCapacity = useMemo(
-    () => getSafeNumber(activeVehicle?.capacity, 1),
+    () => Math.max(1, getSafeNumber(activeVehicle?.capacity, 1)),
     [activeVehicle],
   );
 
@@ -134,18 +134,40 @@ export const TransportFleetPage: React.FC = () => {
 
     setActiveVehicle(null);
     setForm(createInitialInquiryForm());
+    setError(null);
+  };
+
+  const openInquiryForm = (selectedVehicle: VehicleItem) => {
+    setError(null);
+    setForm(createInitialInquiryForm());
+    setActiveVehicle(selectedVehicle);
   };
 
   const handleSubmitInquiry = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!activeVehicle) {
+    if (!activeVehicle || submitting) {
       return;
     }
 
-    setError(null);
+    const pickupLocation = form.pickupLocation.trim();
+    const dropoffLocation = form.dropoffLocation.trim();
+    const passengerCount = getSafeNumber(form.passengers, 0);
 
-    const passengerCount = getSafeNumber(form.passengers, 1);
+    if (!pickupLocation || !dropoffLocation) {
+      setError("Please enter both pickup and drop-off locations.");
+      return;
+    }
+
+    if (!form.startDate || !form.endDate) {
+      setError("Please select both the start date and end date.");
+      return;
+    }
+
+    if (form.endDate <= form.startDate) {
+      setError("End date must be later than the start date.");
+      return;
+    }
 
     if (passengerCount < 1) {
       setError("Please enter at least one passenger.");
@@ -159,11 +181,7 @@ export const TransportFleetPage: React.FC = () => {
       return;
     }
 
-    if (form.endDate < form.startDate) {
-      setError("Return/end date cannot be earlier than the start date.");
-      return;
-    }
-
+    setError(null);
     setSubmitting(true);
 
     try {
@@ -173,8 +191,8 @@ export const TransportFleetPage: React.FC = () => {
       const response = await transportService.submitInquiry({
         vehicle: activeVehicle._id,
         tripType: form.tripType,
-        pickupLocation: form.pickupLocation.trim(),
-        dropoffLocation: form.dropoffLocation.trim(),
+        pickupLocation,
+        dropoffLocation,
         startDate: form.startDate,
         endDate: form.endDate,
         pickupTime: form.pickupTime || null,
@@ -183,13 +201,14 @@ export const TransportFleetPage: React.FC = () => {
       });
 
       setSuccessData({
-        vehicleName: activeVehicle.name.en,
+        vehicleName: activeVehicle.name?.en || "Transport Vehicle",
         whatsappUrl: response.data.customerWhatsAppUrl || null,
         inquiryId: response.data.inquiry._id,
       });
 
       setActiveVehicle(null);
       setForm(createInitialInquiryForm());
+      setError(null);
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -216,7 +235,7 @@ export const TransportFleetPage: React.FC = () => {
 
   if (successData) {
     return (
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         <section className="relative overflow-hidden rounded-xl border border-[#DCE7FA] bg-linear-to-br from-[#F4F7FC] via-white to-[#FFF8F5] px-5 py-8 sm:px-8 sm:py-10">
           <div className="relative z-10 max-w-2xl">
             <div className="flex items-center gap-2 text-[#173C82]">
@@ -232,8 +251,8 @@ export const TransportFleetPage: React.FC = () => {
             </h1>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
-              Your transport request has been received and is now ready for
-              review by our team.
+              Your transport request has been received and is ready for review
+              by the transport team.
             </p>
           </div>
 
@@ -241,7 +260,7 @@ export const TransportFleetPage: React.FC = () => {
           <div className="absolute -bottom-12 right-20 hidden h-32 w-32 rounded-full border-22 border-[#F45A2A]/10 sm:block" />
         </section>
 
-        <div className="mx-auto mt-8 max-w-md rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
+        <section className="mx-auto mt-8 max-w-md rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FFF4F0]">
             <CheckCircle2 className="h-6 w-6 text-[#F45A2A]" />
           </div>
@@ -290,13 +309,13 @@ export const TransportFleetPage: React.FC = () => {
               Return to Fleet
             </button>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
     );
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+    <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
       <section className="relative overflow-hidden rounded-xl border border-[#DCE7FA] bg-linear-to-br from-[#F4F7FC] via-white to-[#FFF8F5] px-5 py-8 sm:px-8 sm:py-10">
         <div className="relative z-10 max-w-2xl">
           <div className="flex items-center gap-2 text-[#173C82]">
@@ -369,7 +388,7 @@ export const TransportFleetPage: React.FC = () => {
       </div>
 
       {error && !activeVehicle && (
-        <div className="mt-6 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-medium text-red-700">
+        <div className="mt-6 flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 p-3 text-sm font-medium text-red-700">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -378,7 +397,7 @@ export const TransportFleetPage: React.FC = () => {
       {activeVehicle ? (
         <section className="mx-auto mt-8 max-w-2xl overflow-hidden rounded-xl border border-slate-200 bg-white">
           <div className="flex items-start justify-between border-b border-slate-100 bg-[#F4F7FC] px-5 py-4 sm:px-6">
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2 text-[#173C82]">
                 <CarFront className="h-4 w-4 text-[#F45A2A]" />
 
@@ -387,14 +406,14 @@ export const TransportFleetPage: React.FC = () => {
                 </span>
               </div>
 
-              <h2 className="mt-2 text-lg font-bold text-[#173C82]">
+              <h2 className="mt-2 truncate text-lg font-bold text-[#173C82]">
                 Request{" "}
                 <span className="text-[#F45A2A]">
-                  {activeVehicle.name.en}
+                  {activeVehicle.name?.en || "Transport Vehicle"}
                 </span>
               </h2>
 
-              {activeVehicle.name.ar && (
+              {activeVehicle.name?.ar && (
                 <p
                   dir="rtl"
                   className="mt-1 text-right text-xs font-semibold text-[#173C82]/70"
@@ -408,7 +427,7 @@ export const TransportFleetPage: React.FC = () => {
               type="button"
               onClick={closeInquiryForm}
               disabled={submitting}
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white text-[#173C82] transition hover:bg-[#FFF4F0] hover:text-[#F45A2A] disabled:opacity-50"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-[#173C82] transition hover:bg-[#FFF4F0] hover:text-[#F45A2A] disabled:opacity-50"
               aria-label="Close transport inquiry form"
             >
               <X className="h-4 w-4" />
@@ -514,7 +533,7 @@ export const TransportFleetPage: React.FC = () => {
 
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                  Drop-off Location
+                  Drop-Off Location
                 </label>
 
                 <div className="relative">
@@ -556,8 +575,8 @@ export const TransportFleetPage: React.FC = () => {
                         startDate: event.target.value,
                         endDate:
                           current.endDate &&
-                          current.endDate < event.target.value
-                            ? event.target.value
+                          current.endDate <= event.target.value
+                            ? ""
                             : current.endDate,
                       }))
                     }
@@ -632,7 +651,7 @@ export const TransportFleetPage: React.FC = () => {
                     onChange={(event) =>
                       setForm((current) => ({
                         ...current,
-                        passengers: Number(event.target.value),
+                        passengers: getSafeNumber(event.target.value, 0),
                       }))
                     }
                     className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
@@ -680,7 +699,7 @@ export const TransportFleetPage: React.FC = () => {
           </form>
         </section>
       ) : vehicles.length === 0 ? (
-        <section className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+        <section className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#F4F7FC]">
             <CarFront className="h-6 w-6 text-[#173C82]" />
           </div>
@@ -700,15 +719,11 @@ export const TransportFleetPage: React.FC = () => {
             <VehicleCard
               key={vehicle._id}
               vehicle={vehicle}
-              onInquire={(selectedVehicle) => {
-                setError(null);
-                setForm(createInitialInquiryForm());
-                setActiveVehicle(selectedVehicle);
-              }}
+              onInquire={openInquiryForm}
             />
           ))}
         </section>
       )}
-    </div>
+    </main>
   );
 };

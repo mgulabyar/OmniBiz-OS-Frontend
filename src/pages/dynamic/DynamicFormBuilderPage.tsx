@@ -75,9 +75,7 @@ const getBusinessId = (businessModule: DynamicFormItem["businessModule"]) =>
     ? businessModule
     : businessModule?._id || "";
 
-const getBusinessName = (
-  businessModule: DynamicFormItem["businessModule"],
-) => {
+const getBusinessName = (businessModule: DynamicFormItem["businessModule"]) => {
   if (typeof businessModule === "string") {
     return "Business Division";
   }
@@ -433,7 +431,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
     <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
       {toast && (
         <div
-          className={`fixed right-4 top-24 z-[100] flex w-[calc(100%-2rem)] max-w-sm items-start gap-3 rounded-xl border p-4 shadow-xl sm:right-6 ${
+          className={`fixed right-4 top-24 z-100 flex w-[calc(100%-2rem)] max-w-sm items-start gap-3 rounded-xl border p-4 shadow-xl sm:right-6 ${
             toast.type === "success"
               ? "border-emerald-100 bg-emerald-50 text-emerald-700"
               : "border-red-100 bg-red-50 text-red-700"
@@ -554,28 +552,47 @@ export const DynamicFormBuilderPage: React.FC = () => {
                 Business Division
               </label>
 
-              <select
-                value={businessModuleId}
-                onChange={(event) => setBusinessModuleId(event.target.value)}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
-                required
-              >
-                <option value="">Select a business division</option>
+              <div className="relative">
+                <select
+                  value={businessModuleId}
+                  onChange={(event) => setBusinessModuleId(event.target.value)}
+                  className="w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-sm font-medium text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
+                  required
+                >
+                  <option value="">Select a business division</option>
 
-                {businesses
-                  .filter((business) => business.isActive)
-                  .map((business) => (
-                    <option key={business._id} value={business._id}>
-                      {business.name.en}
-                    </option>
-                  ))}
-              </select>
+                  {businesses
+                    .filter((business) => business.isActive)
+                    .map((business) => (
+                      <option key={business._id} value={business._id}>
+                        {business.name.en}
+                      </option>
+                    ))}
+                </select>
+
+                <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-500">
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://w3.org"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                  Form Title — English
+                  Form Title - English
                 </label>
 
                 <input
@@ -583,14 +600,14 @@ export const DynamicFormBuilderPage: React.FC = () => {
                   value={titleEn}
                   onChange={(event) => setTitleEn(event.target.value)}
                   placeholder="e.g. Property Inquiry"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
 
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                  Form Title — Arabic
+                  Form Title - Arabic
                 </label>
 
                 <input
@@ -599,7 +616,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
                   value={titleAr}
                   onChange={(event) => setTitleAr(event.target.value)}
                   placeholder="عنوان النموذج بالعربية"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
@@ -608,7 +625,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                  Description — English{" "}
+                  Description - English{" "}
                   <span className="font-medium text-slate-400">(optional)</span>
                 </label>
 
@@ -617,13 +634,13 @@ export const DynamicFormBuilderPage: React.FC = () => {
                   value={descriptionEn}
                   onChange={(event) => setDescriptionEn(event.target.value)}
                   placeholder="Form description in English"
-                  className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 />
               </div>
 
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                  Description — Arabic{" "}
+                  Description - Arabic{" "}
                   <span className="font-medium text-slate-400">(optional)</span>
                 </label>
 
@@ -633,7 +650,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
                   value={descriptionAr}
                   onChange={(event) => setDescriptionAr(event.target.value)}
                   placeholder="وصف النموذج بالعربية"
-                  className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 />
               </div>
             </div>
@@ -646,7 +663,8 @@ export const DynamicFormBuilderPage: React.FC = () => {
                   </p>
 
                   <p className="mt-1 text-xs text-slate-500">
-                    Configure the customer information required for this request.
+                    Configure the customer information required for this
+                    request.
                   </p>
                 </div>
 
@@ -699,7 +717,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
                             )
                           }
                           placeholder="field_key"
-                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                         />
                       </div>
 
@@ -708,30 +726,49 @@ export const DynamicFormBuilderPage: React.FC = () => {
                           Field Type
                         </label>
 
-                        <select
-                          value={field.fieldType}
-                          onChange={(event) =>
-                            updateField(
-                              index,
-                              "fieldType",
-                              event.target.value as DynamicFieldType,
-                            )
-                          }
-                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
-                        >
-                          {fieldTypes.map((fieldType) => (
-                            <option key={fieldType} value={fieldType}>
-                              {fieldTypeLabels[fieldType]}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <select
+                            value={field.fieldType}
+                            onChange={(event) =>
+                              updateField(
+                                index,
+                                "fieldType",
+                                event.target.value as DynamicFieldType,
+                              )
+                            }
+                            className="w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
+                          >
+                            {fieldTypes.map((fieldType) => (
+                              <option key={fieldType} value={fieldType}>
+                                {fieldTypeLabels[fieldType]}
+                              </option>
+                            ))}
+                          </select>
+
+                          <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-500">
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://w3.org"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 9l-7 7-7-7"
+                              />
+                            </svg>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                          Label — English
+                          Label - English
                         </label>
 
                         <input
@@ -741,13 +778,13 @@ export const DynamicFormBuilderPage: React.FC = () => {
                             updateFieldLabel(index, "en", event.target.value)
                           }
                           placeholder="Label in English"
-                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                         />
                       </div>
 
                       <div>
                         <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                          Label — Arabic
+                          Label - Arabic
                         </label>
 
                         <input
@@ -758,7 +795,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
                             updateFieldLabel(index, "ar", event.target.value)
                           }
                           placeholder="التسمية بالعربية"
-                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                         />
                       </div>
                     </div>
@@ -766,7 +803,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                          Placeholder — English
+                          Placeholder - English
                         </label>
 
                         <input
@@ -780,13 +817,13 @@ export const DynamicFormBuilderPage: React.FC = () => {
                             )
                           }
                           placeholder="Optional placeholder"
-                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                         />
                       </div>
 
                       <div>
                         <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                          Placeholder — Arabic
+                          Placeholder - Arabic
                         </label>
 
                         <input
@@ -801,7 +838,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
                             )
                           }
                           placeholder="نص توضيحي اختياري"
-                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                         />
                       </div>
                     </div>
@@ -826,25 +863,20 @@ export const DynamicFormBuilderPage: React.FC = () => {
                             )
                           }
                           placeholder="Options, separated by commas"
-                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                          className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                         />
                       </div>
                     )}
 
                     <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-700">
                       Required Field
-
                       <input
                         type="checkbox"
                         checked={field.isRequired}
                         onChange={(event) =>
-                          updateField(
-                            index,
-                            "isRequired",
-                            event.target.checked,
-                          )
+                          updateField(index, "isRequired", event.target.checked)
                         }
-                        className="h-4 w-4 accent-[#173C82]"
+                        className="h-4 w-4 accent-[#173C82] rounded-md"
                       />
                     </label>
                   </div>
@@ -858,7 +890,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
                   type="button"
                   onClick={resetForm}
                   disabled={submitting}
-                  className="h-11 rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                  className="h-10 rounded-md border border-slate-200 px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
                 >
                   Cancel Edit
                 </button>
@@ -867,7 +899,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[#173C82] px-4 text-sm font-bold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-[#173C82] px-4 text-sm font-semibold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -994,7 +1026,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
 
       {deleteTarget && (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          className="fixed inset-0 z-90 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
@@ -1014,7 +1046,8 @@ export const DynamicFormBuilderPage: React.FC = () => {
                   <ClipboardList className="h-4 w-4 text-[#F45A2A]" />
 
                   <span className="text-[11px] font-bold uppercase tracking-wide">
-                    OmniBiz <span className="text-[#F45A2A]">Expansion Hub</span>
+                    OmniBiz{" "}
+                    <span className="text-[#F45A2A]">Expansion Hub</span>
                   </span>
                 </div>
 
@@ -1078,7 +1111,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
                 type="button"
                 onClick={closeDeleteDialog}
                 disabled={Boolean(deletingId)}
-                className="h-10 rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                className="h-10 rounded-md border border-slate-200 px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
               >
                 Keep Form Active
               </button>
@@ -1087,7 +1120,7 @@ export const DynamicFormBuilderPage: React.FC = () => {
                 type="button"
                 onClick={() => void handleDelete()}
                 disabled={Boolean(deletingId)}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-xs font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-red-600 px-4 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {deletingId ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

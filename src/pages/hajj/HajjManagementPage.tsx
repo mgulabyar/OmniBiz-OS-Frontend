@@ -130,7 +130,10 @@ export const HajjManagementPage: React.FC = () => {
       .map((item) => item.trim())
       .filter(Boolean);
 
-    const featureCount = Math.max(englishFeatures.length, arabicFeatures.length);
+    const featureCount = Math.max(
+      englishFeatures.length,
+      arabicFeatures.length,
+    );
 
     const features = Array.from({ length: featureCount }, (_, index) => ({
       en: englishFeatures[index] || "",
@@ -223,7 +226,8 @@ export const HajjManagementPage: React.FC = () => {
           <div className="flex items-center gap-2 text-[#F45A2A]">
             <Dome className="h-4 w-4" />
             <span className="text-[11px] font-bold uppercase tracking-[0.16em]">
-              Hajj & Umrah Administration
+              <span className="text-[#173C82]">Hajj & Umrah </span>{" "}
+              Administration
             </span>
           </div>
 
@@ -243,9 +247,7 @@ export const HajjManagementPage: React.FC = () => {
           disabled={loading}
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#173C82]/15 bg-white px-4 py-2.5 text-xs font-bold text-[#173C82] transition hover:border-[#173C82]/35 hover:bg-[#F4F7FC] disabled:opacity-60"
         >
-          <RefreshCw
-            className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
-          />
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Refresh packages
         </button>
       </div>
@@ -292,7 +294,7 @@ export const HajjManagementPage: React.FC = () => {
           <form onSubmit={handleFormSubmit} className="mt-5 space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Package title — English
+                Package title - English
               </label>
 
               <input
@@ -305,14 +307,14 @@ export const HajjManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="e.g. Premium Umrah Journey"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Package title — Arabic
+                Package title - Arabic
               </label>
 
               <input
@@ -326,33 +328,53 @@ export const HajjManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="اسم الباقة بالعربية"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
+              {/* Package Type Dropdown */}
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-700">
                   Package type
                 </label>
 
-                <select
-                  value={form.packageType}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      packageType: event.target.value as PackageType,
-                    }))
-                  }
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
-                >
-                  {packageTypes.map((packageType) => (
-                    <option key={packageType} value={packageType}>
-                      {packageType}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={form.packageType}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        packageType: event.target.value as PackageType,
+                      }))
+                    }
+                    className="w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-sm font-medium text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
+                  >
+                    {packageTypes.map((packageType) => (
+                      <option key={packageType} value={packageType}>
+                        {packageType}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-500">
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://w3.org"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -360,22 +382,41 @@ export const HajjManagementPage: React.FC = () => {
                   Tier
                 </label>
 
-                <select
-                  value={form.tier}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      tier: event.target.value as PackageTier,
-                    }))
-                  }
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
-                >
-                  {packageTiers.map((packageTier) => (
-                    <option key={packageTier} value={packageTier}>
-                      {packageTier}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={form.tier}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        tier: event.target.value as PackageTier,
+                      }))
+                    }
+                    className="w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-sm font-medium text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
+                  >
+                    {packageTiers.map((packageTier) => (
+                      <option key={packageTier} value={packageTier}>
+                        {packageTier}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-500">
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://w3.org"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -396,7 +437,7 @@ export const HajjManagementPage: React.FC = () => {
                       price: event.target.value,
                     }))
                   }
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
@@ -416,7 +457,7 @@ export const HajjManagementPage: React.FC = () => {
                       durationDays: event.target.value,
                     }))
                   }
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
@@ -439,7 +480,7 @@ export const HajjManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="Leave empty for regular price"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -458,13 +499,13 @@ export const HajjManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="e.g. Riyadh, Jeddah"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Description — English
+                Description - English
               </label>
 
               <textarea
@@ -477,13 +518,13 @@ export const HajjManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="Short package description"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Description — Arabic
+                Description - Arabic
               </label>
 
               <textarea
@@ -497,7 +538,7 @@ export const HajjManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="وصف مختصر للباقة"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -516,13 +557,13 @@ export const HajjManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="https://example.com/package-image.jpg"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Features — English (one per line)
+                Features - English (one per line)
               </label>
 
               <textarea
@@ -535,13 +576,13 @@ export const HajjManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="Hotel accommodation&#10;Airport transfer&#10;Guided ziyarat"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Features — Arabic (one per line)
+                Features - Arabic (one per line)
               </label>
 
               <textarea
@@ -555,7 +596,7 @@ export const HajjManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="إقامة فندقية&#10;نقل من المطار&#10;زيارات دينية"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -563,7 +604,7 @@ export const HajjManagementPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#173C82] py-3 text-sm font-bold text-white shadow-[0_6px_14px_rgba(23,60,130,0.18)] transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-md bg-[#173C82] py-2.5 text-sm font-semibold text-white shadow-[0_6px_14px_rgba(23,60,130,0.18)] transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin text-[#F45A2A]" />
@@ -580,7 +621,7 @@ export const HajjManagementPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                  className="rounded-md border border-slate-200 px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
                 >
                   Cancel
                 </button>

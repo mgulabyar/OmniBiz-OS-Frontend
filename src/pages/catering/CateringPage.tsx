@@ -466,25 +466,46 @@ export const CateringPage: React.FC = () => {
           </div>
 
           <form onSubmit={handleRfqSubmit} className="mt-5 space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Event Type
-              </label>
+          <div className="relative">
+  <label className="mb-1.5 block text-xs font-bold text-slate-700">
+    Event Type
+  </label>
 
-              <select
-                value={eventType}
-                onChange={(event) =>
-                  setEventType(event.target.value as CateringEventType)
-                }
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
-              >
-                {eventTypes.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+  <div className="relative">
+    <select
+      value={eventType}
+      onChange={(event) =>
+        setEventType(event.target.value as CateringEventType)
+      }
+      className="w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-10 py-2 text-sm font-medium text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
+    >
+      {eventTypes.map((type) => (
+        <option key={type.value} value={type.value}>
+          {type.label}
+        </option>
+      ))}
+    </select>
+    
+    {/* Custom SVG Icon Container */}
+    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500">
+      <svg
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        xmlns="http://w3.org"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M19 9l-7 7-7-7"
+        />
+      </svg>
+    </div>
+  </div>
+</div>
+
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
@@ -499,7 +520,7 @@ export const CateringPage: React.FC = () => {
                   value={venueLocation}
                   onChange={(event) => setVenueLocation(event.target.value)}
                   placeholder="e.g. Riyadh Convention Center"
-                  className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 py-2 pl-10 pr-3 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
@@ -519,7 +540,7 @@ export const CateringPage: React.FC = () => {
                     value={eventDate}
                     min={getTodaySaudiDate()}
                     onChange={(event) => setEventDate(event.target.value)}
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-2 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                    className="w-full rounded-md border border-slate-200 py-2 pl-10 pr-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                     required
                   />
                 </div>
@@ -538,7 +559,7 @@ export const CateringPage: React.FC = () => {
                     type="time"
                     value={eventTime}
                     onChange={(event) => setEventTime(event.target.value)}
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-2 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                    className="w-full rounded-md border border-slate-200 py-2 pl-10 pr-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   />
                 </div>
               </div>
@@ -560,14 +581,14 @@ export const CateringPage: React.FC = () => {
                   onChange={(event) =>
                     setGuestCount(getSafeNumber(event.target.value, 0))
                   }
-                  className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-lg border border-slate-200 py-2 pl-10 pr-3 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-700">
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">
                 Special Requirements{" "}
                 <span className="font-medium text-slate-400">(optional)</span>
               </label>
@@ -577,7 +598,7 @@ export const CateringPage: React.FC = () => {
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
                 placeholder="Dietary restrictions, serving style, event theme or special requests"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -586,7 +607,7 @@ export const CateringPage: React.FC = () => {
                 Estimated Quotation
               </p>
 
-              <p className="mt-1 text-xl font-bold text-[#173C82]">
+              <p className="mt-1 text-md font-bold text-[#173C82]">
                 SAR {totalEstimate.toFixed(2)}
               </p>
 
@@ -600,7 +621,7 @@ export const CateringPage: React.FC = () => {
             <button
               type="submit"
               disabled={submitting || selectedItems.length === 0}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#173C82] px-4 text-sm font-bold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#173C82] px-4 text-sm font-bold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

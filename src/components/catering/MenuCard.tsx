@@ -20,12 +20,16 @@ export const MenuCard: React.FC<MenuCardProps> = ({
   onToggle,
 }) => {
   const pricePerPerson = getSafeNumber(item.pricePerPerson, 0);
-  const dietaryTags = item.dietaryTags?.filter(Boolean) ?? [];
+  const dietaryTags = (item.dietaryTags ?? []).filter(
+    (tag): tag is string => Boolean(tag?.trim()),
+  );
   const visibleDietaryTags = dietaryTags.slice(0, 2);
   const remainingDietaryTagCount = dietaryTags.length - visibleDietaryTags.length;
 
-  const itemName = item.itemName?.en || "Catering Menu Item";
-  const arabicItemName = item.itemName?.ar || "";
+  const itemName = item.itemName?.en?.trim() || "Catering Menu Item";
+  const arabicItemName = item.itemName?.ar?.trim() || "";
+  const category = item.category || "Menu Item";
+  const description = item.description?.en?.trim() || "";
 
   return (
     <button
@@ -39,7 +43,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({
         isSelected
           ? "border-[#173C82] bg-[#F4F7FC] shadow-[0_5px_14px_rgba(23,60,130,0.10)]"
           : "border-slate-200 bg-white hover:border-[#F45A2A]/40 hover:bg-[#FFF8F5]"
-      } focus:outline-none focus:ring-4 focus:ring-[#173C82]/15`}
+      } focus:outline-none focus:ring-2 focus:ring-[#173C82]/15`}
     >
       <div className="flex flex-1 items-start justify-between gap-4">
         <div className="min-w-0">
@@ -51,12 +55,12 @@ export const MenuCard: React.FC<MenuCardProps> = ({
                   : "bg-slate-100 text-slate-600"
               }`}
             >
-              {item.category}
+              {category}
             </span>
 
-            {visibleDietaryTags.map((tag) => (
+            {visibleDietaryTags.map((tag, index) => (
               <span
-                key={tag}
+                key={`${tag}-${index}`}
                 className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#D9481D]"
               >
                 <Leaf className="h-3 w-3 shrink-0" />
@@ -84,15 +88,14 @@ export const MenuCard: React.FC<MenuCardProps> = ({
             </p>
           )}
 
-          {item.description?.en ? (
-            <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">
-              {item.description.en}
-            </p>
-          ) : (
-            <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">
-              Freshly prepared catering option for your event menu.
-            </p>
-          )}
+          <p
+            className={`mt-2 line-clamp-2 text-xs leading-5 ${
+              description ? "text-slate-500" : "text-slate-400"
+            }`}
+          >
+            {description ||
+              "Freshly prepared catering option for your event menu."}
+          </p>
         </div>
 
         <span

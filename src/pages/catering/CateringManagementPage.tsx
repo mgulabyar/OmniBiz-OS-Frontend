@@ -345,7 +345,7 @@ export const CateringManagementPage: React.FC = () => {
           <form onSubmit={handleFormSubmit} className="mt-5 space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Item Name — English
+                Item Name - English
               </label>
 
               <input
@@ -358,14 +358,14 @@ export const CateringManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="e.g. Chicken Kabsa"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Item Name — Arabic
+                Item Name - Arabic
               </label>
 
               <input
@@ -379,7 +379,7 @@ export const CateringManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="اسم الطبق بالعربية"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
@@ -390,22 +390,41 @@ export const CateringManagementPage: React.FC = () => {
                   Category
                 </label>
 
-                <select
-                  value={form.category}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      category: event.target.value as CateringCategory,
-                    }))
-                  }
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
-                >
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={form.category}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        category: event.target.value as CateringCategory,
+                      }))
+                    }
+                    className="w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-sm font-medium text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
+                  >
+                    {categories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+
+                  <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-500">
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://w3.org"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -425,7 +444,7 @@ export const CateringManagementPage: React.FC = () => {
                     }))
                   }
                   placeholder="0.00"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
@@ -433,7 +452,7 @@ export const CateringManagementPage: React.FC = () => {
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Description — English
+                Description - English
               </label>
 
               <textarea
@@ -446,13 +465,13 @@ export const CateringManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="Short menu item description"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Description — Arabic
+                Description - Arabic
               </label>
 
               <textarea
@@ -466,7 +485,7 @@ export const CateringManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="وصف مختصر للطبق"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -486,7 +505,7 @@ export const CateringManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="https://example.com/menu-item.jpg"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -508,7 +527,7 @@ export const CateringManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="Vegetarian, Halal, Gluten-Free"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -516,7 +535,7 @@ export const CateringManagementPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[#173C82] px-4 text-sm font-bold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-[#173C82] px-4 text-sm font-semibold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

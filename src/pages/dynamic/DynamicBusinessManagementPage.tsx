@@ -176,7 +176,10 @@ export const DynamicBusinessManagementPage: React.FC = () => {
     const normalizedSlug = createSlugFromName(form.slug);
 
     if (!form.nameEn.trim() || !form.nameAr.trim()) {
-      showToast("error", "Please provide both English and Arabic business names.");
+      showToast(
+        "error",
+        "Please provide both English and Arabic business names.",
+      );
       return;
     }
 
@@ -251,7 +254,10 @@ export const DynamicBusinessManagementPage: React.FC = () => {
         setForm(createInitialForm());
       }
 
-      showToast("success", "Business division removed from the active ecosystem.");
+      showToast(
+        "success",
+        "Business division removed from the active ecosystem.",
+      );
       setDeleteTarget(null);
       await loadBusinesses(true);
     } catch (requestError) {
@@ -270,7 +276,7 @@ export const DynamicBusinessManagementPage: React.FC = () => {
     <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
       {toast && (
         <div
-          className={`fixed right-4 top-24 z-[100] flex w-[calc(100%-2rem)] max-w-sm items-start gap-3 rounded-xl border p-4 shadow-xl sm:right-6 ${
+          className={`fixed right-4 top-24 z-100 flex w-[calc(100%-2rem)] max-w-sm items-start gap-3 rounded-xl border p-4 shadow-xl sm:right-6 ${
             toast.type === "success"
               ? "border-emerald-100 bg-emerald-50 text-emerald-700"
               : "border-red-100 bg-red-50 text-red-700"
@@ -388,7 +394,7 @@ export const DynamicBusinessManagementPage: React.FC = () => {
           <form onSubmit={handleSubmit} className="mt-5 space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Business Name — English
+                Business Name - English
               </label>
 
               <input
@@ -396,14 +402,14 @@ export const DynamicBusinessManagementPage: React.FC = () => {
                 value={form.nameEn}
                 onChange={(event) => handleNameChange(event.target.value)}
                 placeholder="e.g. Real Estate Services"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Business Name — Arabic
+                Business Name - Arabic
               </label>
 
               <input
@@ -417,7 +423,7 @@ export const DynamicBusinessManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="اسم النشاط بالعربية"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
@@ -437,7 +443,7 @@ export const DynamicBusinessManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="real-estate-services"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
@@ -457,7 +463,7 @@ export const DynamicBusinessManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="e.g. Property & Real Estate"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                 required
               />
             </div>
@@ -467,22 +473,42 @@ export const DynamicBusinessManagementPage: React.FC = () => {
                 Workflow Type
               </label>
 
-              <select
-                value={form.workflowType}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    workflowType: event.target.value as WorkflowType,
-                  }))
-                }
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
-              >
-                {workflowTypes.map((workflowType) => (
-                  <option key={workflowType} value={workflowType}>
-                    {workflowLabels[workflowType]}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={form.workflowType}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      workflowType: event.target.value as WorkflowType,
+                    }))
+                  }
+                  className="w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-sm font-medium text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
+                >
+                  {workflowTypes.map((workflowType) => (
+                    <option key={workflowType} value={workflowType}>
+                      {workflowLabels[workflowType]}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Custom SVG Arrow */}
+                <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-500">
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://w3.org"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -501,13 +527,13 @@ export const DynamicBusinessManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="9665XXXXXXXX"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Description — English
+                Description - English
               </label>
 
               <textarea
@@ -520,13 +546,13 @@ export const DynamicBusinessManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="Short business description"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-700">
-                Description — Arabic
+                Description - Arabic
               </label>
 
               <textarea
@@ -540,7 +566,7 @@ export const DynamicBusinessManagementPage: React.FC = () => {
                   }))
                 }
                 placeholder="وصف مختصر للنشاط"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-right text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-right text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -560,7 +586,7 @@ export const DynamicBusinessManagementPage: React.FC = () => {
                       type="button"
                       onClick={() => togglePaymentMethod(paymentMethod)}
                       aria-pressed={isSelected}
-                      className={`rounded-lg border px-2 py-2 text-xs font-semibold transition ${
+                      className={`rounded-md border px-2 py-2.5 text-xs font-semibold transition ${
                         isSelected
                           ? "border-[#F45A2A] bg-[#FFF4F0] text-[#D9481D]"
                           : "border-slate-200 bg-white text-slate-600 hover:border-[#F45A2A]/40 hover:bg-[#FFF8F5]"
@@ -576,7 +602,7 @@ export const DynamicBusinessManagementPage: React.FC = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#173C82] px-4 text-sm font-bold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#173C82] px-4 text-sm font-semibold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -594,7 +620,7 @@ export const DynamicBusinessManagementPage: React.FC = () => {
                 type="button"
                 onClick={resetForm}
                 disabled={submitting}
-                className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                className="inline-flex h-10 w-full items-center justify-center rounded-md border border-slate-200 px-4 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
               >
                 Cancel Edit
               </button>
@@ -726,7 +752,7 @@ export const DynamicBusinessManagementPage: React.FC = () => {
 
       {deleteTarget && (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
+          className="fixed inset-0 z-90 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-[2px]"
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
@@ -746,7 +772,8 @@ export const DynamicBusinessManagementPage: React.FC = () => {
                   <BriefcaseBusiness className="h-4 w-4 text-[#F45A2A]" />
 
                   <span className="text-[11px] font-bold uppercase tracking-wide">
-                    OmniBiz <span className="text-[#F45A2A]">Expansion Hub</span>
+                    OmniBiz{" "}
+                    <span className="text-[#F45A2A]">Expansion Hub</span>
                   </span>
                 </div>
 
@@ -788,8 +815,7 @@ export const DynamicBusinessManagementPage: React.FC = () => {
               )}
 
               <p className="mt-2 text-xs font-medium text-slate-500">
-                {deleteTarget.businessCategory} · /
-                {deleteTarget.slug}
+                {deleteTarget.businessCategory} · /{deleteTarget.slug}
               </p>
             </div>
 
