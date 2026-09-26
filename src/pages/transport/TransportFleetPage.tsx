@@ -274,8 +274,8 @@ export const TransportFleetPage: React.FC = () => {
             <span className="font-bold text-[#173C82]">
               {successData.vehicleName}
             </span>{" "}
-            has been sent to the transport team. You will receive a route
-            review and quotation shortly.
+            has been sent to the transport team. You will receive a route review
+            and quotation shortly.
           </p>
 
           <div className="mt-5 rounded-lg bg-[#F4F7FC] p-4">
@@ -493,7 +493,7 @@ export const TransportFleetPage: React.FC = () => {
                           tripType: tripType.value,
                         }))
                       }
-                      className={`rounded-lg border px-2 py-2.5 text-xs font-bold transition ${
+                      className={`rounded-md border px-2 py-2.5 text-xs font-bold transition ${
                         isSelected
                           ? "border-[#173C82] bg-[#173C82] text-white"
                           : "border-slate-200 bg-white text-slate-600 hover:border-[#F45A2A]/40 hover:bg-[#FFF8F5]"
@@ -525,7 +525,7 @@ export const TransportFleetPage: React.FC = () => {
                       }))
                     }
                     placeholder="e.g. Riyadh Airport"
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                    className="w-full rounded-md border border-slate-200 py-2 pl-10 pr-3 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                     required
                   />
                 </div>
@@ -549,7 +549,7 @@ export const TransportFleetPage: React.FC = () => {
                       }))
                     }
                     placeholder="e.g. Olaya District"
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                    className="w-full rounded-md border border-slate-200 py-2 pl-10 pr-3 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                     required
                   />
                 </div>
@@ -580,7 +580,7 @@ export const TransportFleetPage: React.FC = () => {
                             : current.endDate,
                       }))
                     }
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                    className="w-full rounded-md border border-slate-200 py-2 pl-10 pr-3 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                     required
                   />
                 </div>
@@ -604,7 +604,7 @@ export const TransportFleetPage: React.FC = () => {
                         endDate: event.target.value,
                       }))
                     }
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                    className="w-full rounded-md border border-slate-200 py-2 pl-10 pr-3 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                     required
                   />
                 </div>
@@ -630,7 +630,7 @@ export const TransportFleetPage: React.FC = () => {
                         pickupTime: event.target.value,
                       }))
                     }
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                    className="w-full rounded-md border border-slate-200 py-2 pl-10 pr-3 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   />
                 </div>
               </div>
@@ -654,7 +654,7 @@ export const TransportFleetPage: React.FC = () => {
                         passengers: getSafeNumber(event.target.value, 0),
                       }))
                     }
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                    className="w-full rounded-md border border-slate-200 py-2 pl-10 pr-3 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                     required
                   />
                 </div>
@@ -677,14 +677,14 @@ export const TransportFleetPage: React.FC = () => {
                   }))
                 }
                 placeholder="Luggage details, special pickup instructions or other requirements"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#173C82] px-4 text-sm font-bold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#173C82] px-4 text-sm font-semibold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

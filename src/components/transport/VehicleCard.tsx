@@ -85,7 +85,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
               Daily Rate
             </p>
 
-            <p className="mt-1 text-lg font-bold text-[#173C82]">
+            <p className="mt-1 text-md font-bold text-[#173C82]">
               SAR {dailyRate.toFixed(2)}
             </p>
           </div>

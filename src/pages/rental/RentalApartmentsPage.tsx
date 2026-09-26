@@ -301,7 +301,7 @@ export const RentalApartmentsPage: React.FC = () => {
               Estimated Total
             </p>
 
-            <p className="mt-1 text-lg font-bold text-[#173C82]">
+            <p className="mt-1 text-sm font-bold text-[#173C82]">
               SAR {successData.totalPrice.toFixed(2)}
             </p>
           </div>
@@ -511,7 +511,7 @@ export const RentalApartmentsPage: React.FC = () => {
                         setCheckOutDate("");
                       }
                     }}
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                    className="w-full rounded-md border border-slate-200 py-2 pl-10 pr-3 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                     required
                   />
                 </div>
@@ -530,7 +530,7 @@ export const RentalApartmentsPage: React.FC = () => {
                     value={checkOutDate}
                     min={checkInDate || getTodaySaudiDate()}
                     onChange={(event) => setCheckOutDate(event.target.value)}
-                    className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                    className="w-full rounded-md border border-slate-200 py-2 pl-10 pr-3 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                     required
                   />
                 </div>
@@ -553,7 +553,7 @@ export const RentalApartmentsPage: React.FC = () => {
                   onChange={(event) =>
                     setGuestCount(getSafeNumber(event.target.value, 0))
                   }
-                  className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                  className="w-full rounded-md border border-slate-200 py-2 pl-10 pr-3 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
                   required
                 />
               </div>
@@ -570,7 +570,7 @@ export const RentalApartmentsPage: React.FC = () => {
                 value={specialRequests}
                 onChange={(event) => setSpecialRequests(event.target.value)}
                 placeholder="Arrival time, accessibility needs or other requests"
-                className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-[#173C82] focus:ring-4 focus:ring-[#173C82]/10"
+                className="w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-600 outline-none transition focus:border-[#173C82] focus:ring-2 focus:ring-[#173C82]/10"
               />
             </div>
 
@@ -579,7 +579,7 @@ export const RentalApartmentsPage: React.FC = () => {
                 Stay Estimate
               </p>
 
-              <p className="mt-1 text-xl font-bold text-[#173C82]">
+              <p className="mt-1 text-md font-bold text-[#173C82]">
                 SAR {stayEstimate.total.toFixed(2)}
               </p>
 
@@ -599,7 +599,7 @@ export const RentalApartmentsPage: React.FC = () => {
             <button
               type="submit"
               disabled={submitting || totalNights <= 0}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#173C82] px-4 text-sm font-bold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#173C82] px-4 text-sm font-bold text-white transition hover:bg-[#102D63] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
